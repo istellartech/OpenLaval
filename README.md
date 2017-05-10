@@ -1,4 +1,4 @@
-# Supersonic-Impulse-Tuebine-Blade-Design
+# OpenLaval
 
 This program fill calculate Supersonic Impulse Turbine Blade Design
 
