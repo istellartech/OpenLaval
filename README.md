@@ -15,6 +15,9 @@ This program was based on below papers
 4. NASA TN D-4421, ANALYTICAL INVESTIGATION OF SUPERSONIC TURBOMACHINERY BLADING: I - Computer Program for Blading Design
 5. NASA TN D-4422, ANALYTICAL INVESTIGATION OF SUPERSONIC TURBOMACHINERY BLADING: II - Analysis of Impulse Turbine-Blade Sections
 
+# Done
+1. Characteristic lines can be drown
+2. Inlet Mach number and Gas Cp are taken in account to generate turbine blade
 
 # Future works
 1. Leading Edge Cutoff
