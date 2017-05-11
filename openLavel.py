@@ -241,12 +241,13 @@ class Blade():
 
     def new_R(self):
 
-        delta_v = 1
+        delta_v = 0.5
         Rstar0 = 0.9
         Rstar = []
         m_k =[]
         kmin = 1
         kmax = int((self.vi - self.vl)/delta_v) + 1
+        print("kmax = ",kmax)
         k = np.arange(kmin,kmax)
 
         xstar_l = np.zeros(k.size)
@@ -266,7 +267,7 @@ class Blade():
             Rstar += [sol.x[0]]
         Rstar = np.array(Rstar)
 
-        fai_k = np.radians(self.vi - self.vl - (k - 1)/delta_v)
+        fai_k = np.radians(self.vi - self.vl - (k - 1)*delta_v)
 
         xstar_k = -Rstar*np.sin(fai_k)
         ystar_k = Rstar*np.cos(fai_k)
@@ -288,19 +289,20 @@ class Blade():
             c = m_k[i] - mbar_k[i]
             xstar_l[i] =  (a - b) / c
             ystar_l[i] = (m_k[i]*a -mbar_k[i]*b)/c 
-            print(i)
+            # print(xstar_l[i],xstar_l[i+1])
+            # print(ystar_l[i],ystar_l[i+1])
 
-
-        print(fr)
-        print(Rstar)
-        print(fai_k)
-        print(xstar_k)
-        print(ystar_k)
-        print(myu_k)
-        print(m_k)
-        print(mbar_k)
-        print(xstar_l)
-        print(ystar_l)
+        print("k = ",k)
+        print("f(R*) = ",fr)
+        print("Rstar = ",Rstar)
+        print("fai k = ",fai_k)
+        print("x*_k = ",xstar_k)
+        print("y*_k = ",ystar_k)
+        print("myu_k = ",myu_k)
+        print("m_k = ",m_k)
+        print("mbar_k = ",mbar_k)
+        print("X*_l = ",xstar_l)
+        print("Y*_l = ",ystar_l)
 
     def get_myu(self, M):
         return np.arcsin(1/M)
