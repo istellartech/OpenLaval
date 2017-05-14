@@ -556,4 +556,15 @@ if __name__ == "__main__":
     f.plot_contour()
     f.plot_contour_simple()
     plt.show()
+
+    mach = np.linspace(1, 5)
+    angle = np.zeros(mach.size)
+    for (i, m) in enumerate(mach):
+        angle[i] = f.get_Pr(m)
+    plt.figure()
+    plt.plot(mach, angle)
+    plt.title("Prandtle-Meyer angle in specific heat ratio = %.2f" % (f.gamma))
+    plt.xlabel("Mach number")
+    plt.ylabel("Prandtle-Meyer angle [deg]")
+    plt.grid()
     print("finish")
