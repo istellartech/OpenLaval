@@ -484,6 +484,13 @@ class Blade():
             self.dfc.T.to_excel(writer, "contour")
             writer.save()
 
+    def calc_solidity(self):
+        """ calculation solidity = C*/G* """
+        self.Cstar = self.lower_concave_out_x_end - self.lower_concave_in_x_end
+        self.Gstar = - self.shift
+        self.solidity = self.Cstar / self.Gstar
+        print("solidity sigma = %.2f" % (self.solidity))
+
     def calc(self):
         """ wrapper of making lines and curves """
         self.make_circular_arcs()
@@ -494,6 +501,7 @@ class Blade():
         self.make_lower_concave()
 
         self.make_interpolate_curve()
+        self.calc_solidity()
 
     def plot_contour(self):
         """ Plot contour """
