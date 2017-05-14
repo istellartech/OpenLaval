@@ -539,6 +539,25 @@ class Blade():
         if(self.is_save_fig):plt.savefig("result/turbine_contour_simple" + self.name + ".png")
         plt.show()
 
+    def plot_Prandtle_Meyer_angle(self):
+        """ Plot Prandtle-Meyer angle at the heat specific ratio """
+        mach = np.linspace(1, 9)
+        angle = np.zeros(mach.size)
+        for (i, m) in enumerate(mach):
+            angle[i] = self.get_Pr(m)
+        plt.figure()
+        plt.plot(angle, mach)
+        plt.plot(self.vi, self.mach_in, "o", label="Inlet")
+        plt.plot(self.vo, self.mach_out, "o", label="Outlet")
+        plt.plot(self.vl, self.mach_lower, "o", label="Lower surface")
+        plt.plot(self.vu, self.mach_upper, "o", label="Upper surface")
+        plt.title("Prandtle-Meyer angle in specific heat ratio = %.2f" % (f.gamma))
+        plt.xlabel("Prandtle-Meyer angle [deg]")
+        plt.ylabel("Mach number")
+        plt.grid()
+        plt.legend()
+        if(self.is_save_fig):plt.savefig("result/turbine_Prandtle_Meyer_angle_" + self.name + ".png")
+
     def change_setting_value(self, section, key, value):
         """ change value in setting file
         Args:
@@ -563,16 +582,7 @@ if __name__ == "__main__":
     f.calc()
     f.plot_contour()
     f.plot_contour_simple()
+    f.plot_Prandtle_Meyer_angle()
     plt.show()
 
-    mach = np.linspace(1, 5)
-    angle = np.zeros(mach.size)
-    for (i, m) in enumerate(mach):
-        angle[i] = f.get_Pr(m)
-    plt.figure()
-    plt.plot(mach, angle)
-    plt.title("Prandtle-Meyer angle in specific heat ratio = %.2f" % (f.gamma))
-    plt.xlabel("Mach number")
-    plt.ylabel("Prandtle-Meyer angle [deg]")
-    plt.grid()
     print("finish")
