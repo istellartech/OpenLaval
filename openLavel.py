@@ -326,6 +326,7 @@ class Blade():
 
         Xstar_l, Ystar_l = self.rotate(xstar_l[-1], ystar_l[-1], angle)
         x, y = [Xstar_l], [Ystar_l]
+        xprev = 0
         for i in range(kmax - kmin - 2, 0, -1):
             a = ystar_l[i+1] - mbar_k[i] * xstar_l[i+1]
             b = ystar_k[i] - m_k[i] * xstar_k[i]
@@ -334,12 +335,17 @@ class Blade():
             ystar_l[i] = (m_k[i]*a -mbar_k[i]*b)/c
             if (angle > 0):
                 xtemp = xstar_l[i]
+                assert xtemp < xprev, "initial vu or vl must be changed"
             else:
                 xtemp = - xstar_l[i]
+                assert xtemp > xprev, "initial vu or v0 must be changed"
+
             Xstar_l, Ystar_l = self.rotate(xtemp, ystar_l[i], angle)
 
             x += [(Xstar_l)]
             y += [(Ystar_l)]
+
+            xprev = xtemp
         return x, y
 
     def make_lower_concave(self):
