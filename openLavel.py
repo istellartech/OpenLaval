@@ -568,53 +568,68 @@ class Blade():
 
     def get_Kstar_max(self):
 
-        Kstar_max0 = 0.8
-        Kstar_max = 0.5
+        max_val = 0
+        while(1):
+            try:
+                f = lambda Mstar: (1 - (max_val/self.Mlstar)**2 * Mstar**2) ** (1/(self.gamma - 1))
+                integrate.quad(f,self.Mlstar,self.Mustar)
+            except:
+                max_val -= 0.1
+                break
+            max_val += 0.1
 
-        f = lambda Mstar: (1-(Kstar_max/self.Mlstar)**2 * Mstar**2)**(1/(self.gamma -1))
-        
+        def func(Kstar_max):
+            a1 = (1 - Kstar_max**2)**(1/(self.gamma -1))
+            a2 = (1 - (Kstar_max**2) * (self.Mustar/self.Mlstar)**2)
+            a3 = (1/(self.gamma - 1))
+            
+            # This if is to avoid the bug in python3 it self
+            if(a2<0):
+                a2 = ((Kstar_max**2) * (self.Mustar/self.Mlstar)**2 - 1)
+                a = a1 + a2**a3
+            else :
+                a = a1 - a2 ** a3
+
+            f = lambda Mstar: (1 - (Kstar_max/self.Mlstar)**2 * Mstar**2) ** (1/(self.gamma - 1))
+            b = integrate.quad(f,self.Mlstar,self.Mustar)
+            return a - b[0]
+
+        Kstar_max = optimize.brentq(func,0.1,max_val)
+
+        return Kstar_max
+
+    def get_C(self):
+
+        Kstar_max = self.get_Kstar_max()
+
+        a = 1 - np.sqrt((self.gamma + 1)/(self.gamma - 1))*((self.gamma + 1) / 2)**(1/(self.gamma - 1))*(self.Mustar/(self.Mustar-self.Mlstar))
+
+        f = lambda Mstar: Kstar_max*(1-(Kstar_max/self.Mlstar)**2 * Mstar**2)**(1/(self.gamma -1))
+
         b = integrate.quad(f,self.Mlstar,self.Mustar)
 
-        print("daradara")
-        print(self.Mlstar,self.Mustar)
+        c = a*b[0]
 
-        print(b[0])
+        return c
 
+    def get_Q(self):
 
+        f = lambda Mstar: ((self.gamma + 1)/2 -(self.gamma - 1)/2 * Mstar**2)**(1/(self.gamma - 1))
 
-        a1 = (1 - Kstar_max0**2)**(1/(self.gamma -1))
-        a2 = (1 - (Kstar_max0**2) * (self.Mustar/self.Mlstar)**2)
-        a3 = (1/(self.gamma - 1))
-
-        a4 = np.power(a2,a3)
-
-        print(a1,a2,a3,a4)
-        print(type(a1),type(a2),type(a3),type(a4))
-        def temp(Kstar_max):
-            temp = (1 - Kstar_max**2)**(1/(self.gamma -1)) - (1 - Kstar_max**2 *(self.Mustar/self.Mlstar)**2)**(1/(self.gamma - 1))
-            return temp
-
-        print(temp(0.8))
-
-        # def func(Kstar_max):
-        #     a1 = (1 - Kstar_max**2)**(1/(self.gamma -1))
-        #     a2 = (1 - (Kstar_max**2) * (self.Mustar/self.Mlstar)**2)
-        #     a3 = (1/(self.gamma - 1))
-        #
-        #     a4 = pow(a2,a3)
-        #     a = (1 - Kstar_max**2)**(1/(self.gamma -1)) - (1 - Kstar_max**2 *(self.Mustar/self.Mlstar)**2)**(1/(self.gamma - 1))
-        #
-        #     f = lambda Mstar: (1 - (Kstar_max/self.Mlstar)**2 * Mstar**2) ** (1/(self.gamma - 1))
-        #     b = integrate.quad(f,self.Mlstar,self.Mustar)
-        #     print(a1,a2,a3,a4)
-        #     print(a,b)
-        #     return  a - b[0]
+        a = integrate.quad(f,self.Mlstar,self.Mustar)
         
-        # sol = optimize.root(func,Kstar_max0)
-        
-        # print(sol)
-        
-        # return sol.x
+        Q = (self.Mlstar*self.Mustar)/(self.Mustar - self.Mlstar) * a[0]
+
+        return Q
+
+    def get_Mistar(self):
+
+        a = self.get_Q()/(1-self.get_C())
+
+        f = lambda Mistar: Mistar**(2*self.gamma/(self.gamma -1)) * ((1-((self.gamma - 1)/(self.gamma + 1))*Mistar**2)/(Mistar**2 - ((self.gamma -1)/(self.gamma + 1))))**(1/(self.gamma -1))
+
+
+        print(a)
 
     def get_Mostar(self):
 
@@ -661,7 +676,9 @@ if __name__ == "__main__":
     print("Design Supersonic Turbine")
 
     f = Blade(setting_file)
-    f.get_Kstar_max()
+    f.get_Q()
+    f.get_Mistar()
+    # f.get_Kstar_max()
     # f.calc()
     # f.plot_contour()
     # f.plot_contour_simple()
