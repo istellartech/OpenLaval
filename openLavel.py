@@ -100,9 +100,11 @@ class Blade():
 
         self.Rstar_l = self.get_Ru(self.vl)
         self.Rstar_u = self.get_Ru(self.vu)
+        self.Mlstar = self.get_Mstar(self.Rstar_l)
+        self.Mustar = self.get_Mstar(self.Rstar_u)
 
         print("Inlet Mach num = %.1f, Outlet Mach num = %.1f" % (mach_in, mach_out))
-        print("Upeer Mach num = %.1f, Lower Mach num = %.1f" % (self.mach_upper, self.mach_lower))
+        print("Upper Mach num = %.1f, Lower Mach num = %.1f" % (self.mach_upper, self.mach_lower))
         print("Inlet Prandtle-Meyer angle = %.1f [deg], Outlet Prandtle-Meyer angle = %.1f [deg]" % (self.vi, self.vo))
         print("Upper Prandtle-Meyer angle = %.1f [deg], Lower Prandtle-Meyer angle = %.1f [deg]" % (self.vu, self.vl))
         print("alpha lower in = %.1f [deg], alpha lower out = %.1f [deg]" % (self.alpha_lower_in, self.alpha_lower_out))
@@ -564,6 +566,80 @@ class Blade():
         plt.legend()
         if(self.is_save_fig):plt.savefig("result/turbine_Prandtle_Meyer_angle_" + self.name + ".png")
 
+    def get_Kstar_max(self):
+
+        Kstar_max0 = 0.8
+        Kstar_max = 0.5
+
+        f = lambda Mstar: (1-(Kstar_max/self.Mlstar)**2 * Mstar**2)**(1/(self.gamma -1))
+        
+        b = integrate.quad(f,self.Mlstar,self.Mustar)
+
+        print("daradara")
+        print(self.Mlstar,self.Mustar)
+
+        print(b[0])
+
+
+
+        a1 = (1 - Kstar_max0**2)**(1/(self.gamma -1))
+        a2 = (1 - (Kstar_max0**2) * (self.Mustar/self.Mlstar)**2)
+        a3 = (1/(self.gamma - 1))
+
+        a4 = np.power(a2,a3)
+
+        print(a1,a2,a3,a4)
+        print(type(a1),type(a2),type(a3),type(a4))
+        def temp(Kstar_max):
+            temp = (1 - Kstar_max**2)**(1/(self.gamma -1)) - (1 - Kstar_max**2 *(self.Mustar/self.Mlstar)**2)**(1/(self.gamma - 1))
+            return temp
+
+        print(temp(0.8))
+
+        # def func(Kstar_max):
+        #     a1 = (1 - Kstar_max**2)**(1/(self.gamma -1))
+        #     a2 = (1 - (Kstar_max**2) * (self.Mustar/self.Mlstar)**2)
+        #     a3 = (1/(self.gamma - 1))
+        #
+        #     a4 = pow(a2,a3)
+        #     a = (1 - Kstar_max**2)**(1/(self.gamma -1)) - (1 - Kstar_max**2 *(self.Mustar/self.Mlstar)**2)**(1/(self.gamma - 1))
+        #
+        #     f = lambda Mstar: (1 - (Kstar_max/self.Mlstar)**2 * Mstar**2) ** (1/(self.gamma - 1))
+        #     b = integrate.quad(f,self.Mlstar,self.Mustar)
+        #     print(a1,a2,a3,a4)
+        #     print(a,b)
+        #     return  a - b[0]
+        
+        # sol = optimize.root(func,Kstar_max0)
+        
+        # print(sol)
+        
+        # return sol.x
+
+    def get_Mostar(self):
+
+        Mi = 2
+
+        a = np.sqrt((self.gamma + 1) / (self.gamma - 1))
+        b = 1 - ((self.gamma - 1)/(self.gamma + 1)) * Mi ** 2
+        c = 1 + 0.5 * ((self.gamma/(self.gamma + 1)) * Mi **2)/b
+
+        Mlmin = a * (1 - b * c ** (self.gamma - 1 / self.gamma))**0.5
+
+        print("Mlmin= ",Mlmin)
+
+    def get_Mlstar_min(self):
+
+        Mumax = 2
+
+        a = np.sqrt((self.gamma + 1) / (self.gamma - 1))
+        b = 1 - ((self.gamma - 1)/(self.gamma + 1)) * Mumax ** 2
+        c = 1 + 0.5 * ((self.gamma/(self.gamma + 1)) * Mumax **2)/b
+
+        Mostar = a * (1 - b * c ** (self.gamma - 1 / self.gamma))**0.5
+
+        print("Mostar",Mostar)
+
     def change_setting_value(self, section, key, value):
         """ change value in setting file
         Args:
@@ -581,14 +657,15 @@ if __name__ == "__main__":
         setting_file = sys.argv[1]
         assert os.path.exists(setting_file), "no file exist"
     plt.close("all")
-    plt.ion()
+    # plt.ion()
     print("Design Supersonic Turbine")
 
     f = Blade(setting_file)
-    f.calc()
-    f.plot_contour()
-    f.plot_contour_simple()
-    f.plot_Prandtle_Meyer_angle()
-    plt.show()
+    f.get_Kstar_max()
+    # f.calc()
+    # f.plot_contour()
+    # f.plot_contour_simple()
+    # f.plot_Prandtle_Meyer_angle()
+    # plt.show()
 
     print("finish")
