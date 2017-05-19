@@ -103,6 +103,8 @@ class Blade():
         self.Mlstar = self.get_Mstar(self.Rstar_l)
         self.Mustar = self.get_Mstar(self.Rstar_u)
 
+        # self.fvl_min = np.rad2deg(self.get_vl_min())
+
         print("Inlet Mach num = %.1f, Outlet Mach num = %.1f" % (mach_in, mach_out))
         print("Upper Mach num = %.1f, Lower Mach num = %.1f" % (self.mach_upper, self.mach_lower))
         print("Inlet Prandtle-Meyer angle = %.1f [deg], Outlet Prandtle-Meyer angle = %.1f [deg]" % (self.vi, self.vo))
@@ -114,6 +116,9 @@ class Blade():
         print("== Prandtle-Meyer angle limitation ==")
         print("upper max = %.2f, upper min = %.2f, lower max = %.2f, lower min = %.2f" % (self.vumax, self.vumin, self.vlmax, self.vlmin))
         print("R* lower = %.2f, R* upper = %.2f" % (self.Rstar_l, self.Rstar_u))
+        print("=== Flow separation limit Prandtle-Meyer angle ===")
+        # print("lower min = %.2f" % self.fvl_min)
+
 
     # if Rstar value is less than self.Rstar_min, if will give math error
     def chara_line(self, Rstar):
@@ -256,6 +261,7 @@ class Blade():
                       (np.sin(theta), np.cos(theta))))
         b = np.array((x, y))
         return np.dot(a, b)
+
 
     def get_Pr(self, Mach):
 
@@ -582,7 +588,7 @@ class Blade():
             a1 = (1 - Kstar_max**2)**(1/(self.gamma -1))
             a2 = (1 - (Kstar_max**2) * (self.Mustar/self.Mlstar)**2)
             a3 = (1/(self.gamma - 1))
-            
+
             # This if is to avoid the bug in python3 it self
             if(a2<0):
                 a2 = ((Kstar_max**2) * (self.Mustar/self.Mlstar)**2 - 1)
@@ -624,26 +630,38 @@ class Blade():
 
     def get_Mistar(self):
 
-        a = self.get_Q()/(1-self.get_C())
+        Mistar0 = 1.5
+        
+        def func(Mistar):
+            a = self.get_Q()/(1-self.get_C())
+            b = Mistar**(2*self.gamma/(self.gamma -1)) * ((1-((self.gamma - 1)/(self.gamma + 1))*Mistar**2)/(Mistar**2 - ((self.gamma -1)/(self.gamma + 1))))**(1/(self.gamma -1))
 
-        f = lambda Mistar: Mistar**(2*self.gamma/(self.gamma -1)) * ((1-((self.gamma - 1)/(self.gamma + 1))*Mistar**2)/(Mistar**2 - ((self.gamma -1)/(self.gamma + 1))))**(1/(self.gamma -1))
+            return b - a
+            
+        sol = optimize.root(func,Mistar0) 
 
+        Mistar_max = sol.x[0]
 
-        print(a)
+        return Mistar_max
 
-    def get_Mostar(self):
+    def get_vl_min(self):
 
-        Mi = 2
+        Mi = self.get_Mistar()
 
         a = np.sqrt((self.gamma + 1) / (self.gamma - 1))
         b = 1 - ((self.gamma - 1)/(self.gamma + 1)) * Mi ** 2
         c = 1 + 0.5 * ((self.gamma/(self.gamma + 1)) * Mi **2)/b
 
-        Mlmin = a * (1 - b * c ** (self.gamma - 1 / self.gamma))**0.5
+        Mlmin = a * (1 - b * c ** ((self.gamma - 1) / self.gamma))**0.5
 
-        print("Mlmin= ",Mlmin)
+        vl_min = np.pi / 4 * (np.sqrt((self.gamma + 1)/(self.gamma - 1))) + self.chara_line(1/Mlmin)
 
-    def get_Mlstar_min(self):
+        # print("Mlmin= ",Mlmin)
+        # print("vl_min = ",vl_min)
+
+        return vl_min
+
+    def get_Mostar_max(self):
 
         Mumax = 2
 
@@ -654,6 +672,8 @@ class Blade():
         Mostar = a * (1 - b * c ** (self.gamma - 1 / self.gamma))**0.5
 
         print("Mostar",Mostar)
+
+        return Mostar
 
     def change_setting_value(self, section, key, value):
         """ change value in setting file
@@ -676,13 +696,13 @@ if __name__ == "__main__":
     print("Design Supersonic Turbine")
 
     f = Blade(setting_file)
-    f.get_Q()
-    f.get_Mistar()
+    # f.get_Q()
+    # f.get_Mlstar_min()
     # f.get_Kstar_max()
     # f.calc()
     # f.plot_contour()
     # f.plot_contour_simple()
-    # f.plot_Prandtle_Meyer_angle()
+    # f.plot_()
     # plt.show()
 
     print("finish")
