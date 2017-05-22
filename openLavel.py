@@ -464,18 +464,25 @@ class Blade():
 
         ucx = np.zeros(0)
         ucy = np.zeros(0)
+        ucx = np.append(ucx, np.array(self.edge_straight_in_x))
         ucx = np.append(ucx, np.array(self.upper_straight_in_x))
         ucx = np.append(ucx, np.array(self.upper_convex_in_x)[::-1])
         ucx = np.append(ucx, self.upper_arc_x)
         ucx = np.append(ucx, np.array(self.upper_convex_out_x))
         ucx = np.append(ucx, np.array(self.upper_straight_out_x))
+        ucx = np.append(ucx, np.array(self.edge_straight_out_x))
+
+        ucy = np.append(ucy, np.array(self.edge_straight_in_y))
         ucy = np.append(ucy, np.array(self.upper_straight_in_y))
         ucy = np.append(ucy, np.array(self.upper_convex_in_y)[::-1])
         ucy = np.append(ucy, self.upper_arc_y)
         ucy = np.append(ucy, np.array(self.upper_convex_out_y))
         ucy = np.append(ucy, np.array(self.upper_straight_out_y))
+        ucy = np.append(ucy, np.array(self.edge_straight_out_y))
         self.upper_curve_x = ucx
         self.upper_curve_y = ucy
+
+        print(len(ucx),len(ucy))
 
         x = np.linspace(ucx.min(), ucx.max(), self.num_output_points)
         lcy_func = interp1d(self.lower_curve_x, self.lower_curve_y)
@@ -511,6 +518,7 @@ class Blade():
         self.make_lower_concave()
         self.make_upper_convex()
         self.make_upper_straight_line()
+        self.calc_leading_edge()
         self.make_circular_arcs()
         self.make_lower_concave()
 
@@ -541,7 +549,7 @@ class Blade():
 
     def plot_contour_simple(self, color="k"):
         """ Plot contour that all lines are mono color """
-        plt.figure()
+        # plt.figure()
         plt.plot(self.lower_curve_x, self.lower_curve_y, color=color)
         plt.plot(self.lower_curve_x_shift, self.lower_curve_y_shift, color=color)
         plt.plot(self.upper_curve_x, self.upper_curve_y, color=color)
@@ -675,6 +683,49 @@ class Blade():
 
         return Mostar
 
+    def calc_leading_edge(self):
+
+        delta = 8
+        t = self.shift * 0.1
+
+        x1 = self.upper_convex_in_x_end
+        y1 = self.upper_convex_in_y_end
+        x2 = self.lower_concave_in_x_end
+        y2 = self.lower_concave_in_y_end
+
+        def func1(x):
+            func1 = np.tan(np.deg2rad(self.beta_in)) * x + y1 - np.tan(np.deg2rad(self.beta_in)) * x1 - t
+            func2 = np.tan(np.deg2rad(self.beta_in + delta)) * x + y2 - np.tan(np.deg2rad(self.beta_in + delta)) * x2 + self.shift
+            return func1 - func2
+
+        x = optimize.root(func1,-1)
+        y = np.tan(np.deg2rad(self.beta_in + delta)) * x.x[0] + y2 - np.tan(np.deg2rad(self.beta_in + delta)) * x2 + self.shift
+
+        self.upper_straight_in_x = [x1, x.x[0]]
+        self.upper_straight_in_y = [y1, y]
+        self.edge_straight_in_x = [x2,x.x[0]]
+        self.edge_straight_in_y = [y2 + self.shift + t,y]
+
+        x1 = self.upper_convex_out_x_end
+        y1 = self.upper_convex_out_y_end
+        x2 = self.lower_concave_out_x_end
+        y2 = self.lower_concave_out_y_end
+
+        def func2(x):
+            func1 = np.tan(np.deg2rad(self.beta_out)) * x + y1 - np.tan(np.deg2rad(self.beta_out)) * x1 - t
+            func2 = np.tan(np.deg2rad(self.beta_out - delta)) * x + y2 - np.tan(np.deg2rad(self.beta_out - delta)) * x2 + self.shift
+            return func1 - func2
+
+        x = optimize.root(func2,1)
+        y = np.tan(np.deg2rad(self.beta_out - delta)) * x.x[0] + y2 - np.tan(np.deg2rad(self.beta_out - delta)) * x2 + self.shift
+
+        self.upper_straight_out_x = [x1, x.x[0]]
+        self.upper_straight_out_y = [y1, y]
+        self.edge_straight_out_x = [x2,x.x[0]]
+        self.edge_straight_out_y = [y2 + self.shift + t,y]
+
+        self.shift = self.shift + t
+
     def change_setting_value(self, section, key, value):
         """ change value in setting file
         Args:
@@ -696,12 +747,14 @@ if __name__ == "__main__":
     print("Design Supersonic Turbine")
 
     f = Blade(setting_file)
+    f.calc()
+    f.calc_leading_edge()
     # f.get_Q()
     # f.get_Mlstar_min()
     # f.get_Kstar_max()
     # f.calc()
     # f.plot_contour()
-    # f.plot_contour_simple()
+    f.plot_contour_simple()
     # f.plot_()
     # plt.show()
 
