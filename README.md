@@ -18,10 +18,10 @@ This program was based on below papers
 # Done
 1. Characteristic lines can be drown
 2. Inlet Mach number and Gas Cp are taken in account to generate turbine blade
+3. Leading Edge Cutoff partially done
 
 # Future works
-1. Leading Edge Cutoff
-2. Asymetry Blade
-3. Evaluation Function Enrichment
+1. Asymetry Blade
+2. Evaluation Function Enrichment (Function are there but seems invalid yet)
 
 of cource with constant bug fix
