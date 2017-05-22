@@ -539,6 +539,8 @@ class Blade():
         plt.plot(self.upper_convex_out_x, self.upper_convex_out_y)
         plt.plot(self.upper_straight_in_x, self.upper_straight_in_y)
         plt.plot(self.upper_straight_out_x, self.upper_straight_out_y)
+        plt.plot(self.edge_straight_in_x, self.edge_straight_in_y)
+        plt.plot(self.edge_straight_out_x, self.edge_straight_out_y)
         # plt.plot([],[], color='k', label="hoge")
         plt.gca().set_aspect('equal', adjustable='box')
         plt.title("turbine wing contour : " + self.name)
@@ -549,7 +551,7 @@ class Blade():
 
     def plot_contour_simple(self, color="k"):
         """ Plot contour that all lines are mono color """
-        # plt.figure()
+        plt.figure()
         plt.plot(self.lower_curve_x, self.lower_curve_y, color=color)
         plt.plot(self.lower_curve_x_shift, self.lower_curve_y_shift, color=color)
         plt.plot(self.upper_curve_x, self.upper_curve_y, color=color)
@@ -631,7 +633,6 @@ class Blade():
         f = lambda Mstar: ((self.gamma + 1)/2 -(self.gamma - 1)/2 * Mstar**2)**(1/(self.gamma - 1))
 
         a = integrate.quad(f,self.Mlstar,self.Mustar)
-        
         Q = (self.Mlstar*self.Mustar)/(self.Mustar - self.Mlstar) * a[0]
 
         return Q
@@ -639,14 +640,14 @@ class Blade():
     def get_Mistar(self):
 
         Mistar0 = 1.5
-        
+
         def func(Mistar):
             a = self.get_Q()/(1-self.get_C())
             b = Mistar**(2*self.gamma/(self.gamma -1)) * ((1-((self.gamma - 1)/(self.gamma + 1))*Mistar**2)/(Mistar**2 - ((self.gamma -1)/(self.gamma + 1))))**(1/(self.gamma -1))
 
             return b - a
-            
-        sol = optimize.root(func,Mistar0) 
+
+        sol = optimize.root(func,Mistar0)
 
         Mistar_max = sol.x[0]
 
@@ -748,12 +749,11 @@ if __name__ == "__main__":
 
     f = Blade(setting_file)
     f.calc()
-    f.calc_leading_edge()
     # f.get_Q()
     # f.get_Mlstar_min()
     # f.get_Kstar_max()
     # f.calc()
-    # f.plot_contour()
+    f.plot_contour()
     f.plot_contour_simple()
     # f.plot_()
     # plt.show()
