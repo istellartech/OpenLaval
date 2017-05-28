@@ -60,8 +60,14 @@ class Blade():
         vu = setting.getint("Turbine-Blade", "upper surface Prandtle-Meyer angle[deg]")
         vl = setting.getint("Turbine-Blade", "lower surface Prandtle-Meyer angle[deg]")
 
+        self.edge_delta = setting.getfloat("edge", "Increment of edge angle[deg]")
+        self.edge_offset = setting.getfloat("edge", "Offset rate for edge(0.0-0.5)")
+
         # error mode
         assert mach_in > 1.0, "inlet mach number must be more than 1.0"
+        assert self.edge_delta >= 0.0, "Increment of edge angle must be more than 0"
+        assert self.edge_offset >= 0.0, "Offset rate for edge must be more than 0.0"
+        assert (self.edge_delta != 0 and self.edge_offset != 0) or (self.edge_delta == 0 and self.edge_offset == 0), "It is prohibited to set only one parameter to zero, (Increment of edge angle and Offset rate for edge)"
 
         self.gamma = gamma
         self.mach_in = mach_in
@@ -518,7 +524,7 @@ class Blade():
         self.make_lower_concave()
         self.make_upper_convex()
         self.make_upper_straight_line()
-        self.calc_leading_edge()
+        self.calc_leading_edge(self.edge_delta, self.edge_offset)
         self.make_circular_arcs()
         self.make_lower_concave()
 
@@ -583,6 +589,10 @@ class Blade():
         if(self.is_save_fig):plt.savefig("result/turbine_Prandtle_Meyer_angle_" + self.name + ".png")
 
     def get_Kstar_max(self):
+        """ value of K*(dimensionless vortex constant) for which weight flow in maximum
+        See also:
+            NASA TN D-4421 eq. 23-25
+        """
 
         max_val = 0
         while(1):
@@ -615,29 +625,29 @@ class Blade():
         return Kstar_max
 
     def get_C(self):
-
+        """ get reduction in maximum weight flow due to two-dimensional flow
+        See also:
+            NASA TN D-4421 eq. 34b
+        """
         Kstar_max = self.get_Kstar_max()
-
-        a = 1 - np.sqrt((self.gamma + 1)/(self.gamma - 1))*((self.gamma + 1) / 2)**(1/(self.gamma - 1))*(self.Mustar/(self.Mustar-self.Mlstar))
-
-        f = lambda Mstar: Kstar_max*(1-(Kstar_max/self.Mlstar)**2 * Mstar**2)**(1/(self.gamma -1))
-
-        b = integrate.quad(f,self.Mlstar,self.Mustar)
-
-        c = a*b[0]
-
-        return c
+        a = 1 - np.sqrt((self.gamma + 1)/(self.gamma - 1)) * ((self.gamma + 1) / 2)**(1 / (self.gamma - 1)) * (self.Mustar / (self.Mustar - self.Mlstar))
+        f = lambda Mstar: Kstar_max * (1 - (Kstar_max / self.Mlstar)**2 * Mstar**2)**(1 / (self.gamma - 1))
+        b = integrate.quad(f, self.Mlstar, self.Mustar)
+        C = a * b[0]
+        return C
 
     def get_Q(self):
-
-        f = lambda Mstar: ((self.gamma + 1)/2 -(self.gamma - 1)/2 * Mstar**2)**(1/(self.gamma - 1))
-
-        a = integrate.quad(f,self.Mlstar,self.Mustar)
-        Q = (self.Mlstar*self.Mustar)/(self.Mustar - self.Mlstar) * a[0]
-
+        """ get vortex flow parameter Q
+        See also:
+            NASA TN D-4421 eq. 34a
+        """
+        f = lambda Mstar: ((self.gamma + 1) / 2 - (self.gamma - 1) / 2 * Mstar**2)**(1 / (self.gamma - 1))
+        a = integrate.quad(f, self.Mlstar, self.Mustar)
+        Q = (self.Mlstar * self.Mustar) / (self.Mustar - self.Mlstar) * a[0]
         return Q
 
     def get_Mistar(self):
+        """ get (Mi*)_max that is maximum inlet velocity ratio for supersonic starting"""
 
         Mistar0 = 1.5
 
@@ -654,6 +664,7 @@ class Blade():
         return Mistar_max
 
     def get_vl_min(self):
+        """ get nu_l that is minimum lower-surface Prandtl-Meyer angle from separation criterion, [rad] """
 
         Mi = self.get_Mistar()
 
@@ -673,21 +684,21 @@ class Blade():
     def get_Mostar_max(self):
 
         Mumax = 2
-
         a = np.sqrt((self.gamma + 1) / (self.gamma - 1))
         b = 1 - ((self.gamma - 1)/(self.gamma + 1)) * Mumax ** 2
         c = 1 + 0.5 * ((self.gamma/(self.gamma + 1)) * Mumax **2)/b
-
         Mostar = a * (1 - b * c ** (self.gamma - 1 / self.gamma))**0.5
-
         print("Mostar",Mostar)
-
         return Mostar
 
-    def calc_leading_edge(self):
-
-        delta = 8
-        t = self.shift * 0.1
+    def calc_leading_edge(self, delta=8, offset=0.1):
+        """ if you don't want to make the end small angle, adjust the end by
+        change the angle and the offset
+        Args:
+            delta (float) : Increment of edge angle
+            offset (float) : offset ratio by G*(shift) from row lower-surface
+        """
+        t = self.shift * offset
 
         x1 = self.upper_convex_in_x_end
         y1 = self.upper_convex_in_y_end
