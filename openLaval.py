@@ -110,6 +110,8 @@ class Blade():
         self.Mustar = self.get_Mstar(self.Rstar_u)
 
         # self.fvl_min = np.rad2deg(self.get_vl_min())
+        # error mode
+        assert beta_in > self.check_inlet_beta_ang(), "Axial velocity must be lower than Mach 1. Your beta in angle must be more than %.1f [deg]" % self.check_inlet_beta_ang()
 
         print("Inlet Mach num = %.1f, Outlet Mach num = %.1f" % (mach_in, mach_out))
         print("Upper Mach num = %.1f, Lower Mach num = %.1f" % (self.mach_upper, self.mach_lower))
@@ -119,10 +121,11 @@ class Blade():
         print("alpha upper in = %.1f [deg], alpha upper out = %.1f [deg]" % (self.alpha_upper_in, self.alpha_upper_out))
         print("beta in = %.1f [deg], beta out = %.1f [deg]" % (self.beta_in, self.beta_out))
         print("total turn angle = %.1f [deg]" % (self.total_turn_ang))
+
         print("== Prandtle-Meyer angle limitation ==")
         print("upper max = %.2f, upper min = %.2f, lower max = %.2f, lower min = %.2f" % (self.vumax, self.vumin, self.vlmax, self.vlmin))
         print("R* lower = %.2f, R* upper = %.2f" % (self.Rstar_l, self.Rstar_u))
-        print("=== Flow separation limit Prandtle-Meyer angle ===")
+        # print("=== Flow separation limit Prandtle-Meyer angle ===")
         # print("lower min = %.2f" % self.fvl_min)
 
 
@@ -488,8 +491,6 @@ class Blade():
         self.upper_curve_x = ucx
         self.upper_curve_y = ucy
 
-        print(len(ucx),len(ucy))
-
         x = np.linspace(ucx.min(), ucx.max(), self.num_output_points)
         lcy_func = interp1d(self.lower_curve_x, self.lower_curve_y)
         lcy_shift_func = interp1d(self.lower_curve_x_shift, self.lower_curve_y_shift)
@@ -748,6 +749,12 @@ class Blade():
         self.setting.set(section, key, str(value))
         self.__init__(self.setting_file, reload=True)
 
+    #Axial Mach number must be under Mach 1
+    def check_inlet_beta_ang(self):
+
+        theta = np.rad2deg(np.arccos(1/self.mach_in))
+        return theta
+
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         setting_file = 'setting.ini'
@@ -760,11 +767,12 @@ if __name__ == "__main__":
 
     f = Blade(setting_file)
     f.calc()
+    f.check_inlet_beta_ang()
     # f.get_Q()
     # f.get_Mlstar_min()
     # f.get_Kstar_max()
     # f.calc()
-    f.plot_contour()
+    # f.plot_contour()
     f.plot_contour_simple()
     # f.plot_()
     # plt.show()
