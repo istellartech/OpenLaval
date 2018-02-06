@@ -70,7 +70,8 @@ class Blade():
         assert (self.edge_delta != 0 and self.edge_offset != 0) or (self.edge_delta == 0 and self.edge_offset == 0), "It is prohibited to set only one parameter to zero, (Increment of edge angle and Offset rate for edge)"
 
         self.gamma = gamma
-        self.mach_in = mach_in
+        #self.mach_in = mach_in
+        self.mach_in = self.mach_after_edge(mach_in)        # Calculate mach after leading edge
         self.mach_out = mach_out
         self.beta_in = beta_in
         self.vu = vu
@@ -114,6 +115,7 @@ class Blade():
         assert beta_in > self.check_inlet_beta_ang(), "Axial velocity must be lower than Mach 1. Your beta in angle must be more than %.1f [deg]" % self.check_inlet_beta_ang()
 
         print("Inlet Mach num = %.1f, Outlet Mach num = %.1f" % (mach_in, mach_out))
+        print("Inlet Mach after leading edge = ",self.mach_in)
         print("Upper Mach num = %.1f, Lower Mach num = %.1f" % (self.mach_upper, self.mach_lower))
         print("Inlet Prandtle-Meyer angle = %.1f [deg], Outlet Prandtle-Meyer angle = %.1f [deg]" % (self.vi, self.vo))
         print("Upper Prandtle-Meyer angle = %.1f [deg], Lower Prandtle-Meyer angle = %.1f [deg]" % (self.vu, self.vl))
@@ -291,6 +293,12 @@ class Blade():
         sol = optimize.root(func, mach0, args=(v1))
         mach = sol.x[0]
         return mach
+
+    def mach_after_edge(self,mach_in):
+        ve = self.get_Pr(mach_in) + self.edge_delta
+        me = self.get_mach_from_prandtle_meyer(ve)
+
+        return me
 
     def make_circular_arcs(self):
         """ make concentric circular arcs """
@@ -766,6 +774,7 @@ if __name__ == "__main__":
     print("Design Supersonic Turbine")
 
     f = Blade(setting_file)
+    f.mach_after_edge(2.5)
     f.calc()
     f.check_inlet_beta_ang()
     # f.get_Q()
