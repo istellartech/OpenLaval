@@ -6,6 +6,14 @@ Required parameters are Specific heat ratio and inlet Mach numbers
 
 Licence are written in the file.
 
+# Usage
+Write the necessary parameters in the setting.ini file and save it before executing the following
+
+```
+python openLaval.py
+```
+
+Results are saved in the result folder.
 
 # Reference
 This program was based on below papers
